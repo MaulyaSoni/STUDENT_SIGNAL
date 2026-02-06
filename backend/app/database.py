@@ -1,18 +1,19 @@
-from pymongo import MongoClient
 import os
 from dotenv import load_dotenv
+from pymongo import MongoClient
 
 load_dotenv()
 
 MONGO_URI = os.getenv("MONGO_URI")
+DB_NAME = os.getenv("DB_NAME")
 
-print("DEBUG MONGO_URI:", MONGO_URI)  # 👈 ADD THIS
+if not MONGO_URI:
+    raise RuntimeError("MONGO_URI not found")
 
-client = MongoClient(
-    MONGO_URI,
-    serverSelectionTimeoutMS=5000
-)
+client = MongoClient(MONGO_URI)
+db = client[DB_NAME]
 
-db = client["student_signal"]
 students_collection = db["students"]
 alerts_collection = db["alerts"]
+
+print("✅ MongoDB connected")
