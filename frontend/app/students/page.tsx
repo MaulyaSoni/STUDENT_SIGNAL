@@ -31,7 +31,7 @@ interface Student {
   dropout_probability: number
 }
 
-const departments = ['All Departments', 'Computer Science', 'Engineering', 'Business', 'Biology', 'Mathematics']
+const departments = ['All Departments', 'CSE', 'IT', 'CE', 'DCSE', 'DIT','DCE']
 const semesters = ['All Semesters', '1', '2', '3', '4', '5', '6', '7', '8']
 const riskLevels = ['All Risk Levels', 'low', 'medium', 'high']
 
