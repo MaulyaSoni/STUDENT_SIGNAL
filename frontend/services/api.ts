@@ -15,8 +15,13 @@ interface Student {
   semester: number
   gpa: number
   attendance: number
+  internal_marks?: number
+  backlogs?: number
+  study_hours?: number
+  previous_failures?: number
   risk_level: 'low' | 'medium' | 'high'
   dropout_probability: number
+  risk_factors?: string[]
 }
 
 interface StudentDetail extends Student {
@@ -29,10 +34,29 @@ interface StudentDetail extends Student {
 interface UploadResponse {
   message: string
   rows_processed: number
+  rows_analyzed?: number
+}
+
+interface PredictionRequest {
+  attendance: number
+  internal_marks?: number
+  backlogs?: number
+  study_hours?: number
+  previous_failures?: number
+}
+
+interface PredictionResponse {
+  dropout_probability: number
+  risk_level: 'low' | 'medium' | 'high'
+  prediction: number
+  risk_factors: string[]
+  confidence: string
+  recommendations: string[]
 }
 
 interface AnalysisResponse {
   student_id: string
+  name: string
   risk_level: 'low' | 'medium' | 'high'
   dropout_probability: number
   risk_factors: string[]
@@ -61,18 +85,24 @@ export async function getStudents(filters?: {
     const response = await fetch(`${API_BASE_URL}/students?${params}`)
     if (!response.ok) throw new Error(`Failed to fetch students: ${response.statusText}`)
     const students = await response.json()
-    // Transform backend data to frontend format
+    
+    // Backend now returns data in correct format
     return students.map((student: any) => ({
-      id: student.student_id,
+      id: student.id || student.student_id,
       name: student.name,
-      email: `${student.name.toLowerCase().replace(' ', '.')}@university.edu`,
+      email: student.email || `${student.name.toLowerCase().replace(' ', '.')}@university.edu`,
       student_id: student.student_id,
       department: student.department,
       semester: student.semester || 1,
       gpa: student.gpa || 3.0,
       attendance: student.attendance,
-      risk_level: student.risk?.level || 'low',
-      dropout_probability: student.risk?.ml_probability || 0.1,
+      internal_marks: student.internal_marks,
+      backlogs: student.backlogs,
+      study_hours: student.study_hours,
+      previous_failures: student.previous_failures,
+      risk_level: student.risk_level || 'low',
+      dropout_probability: student.dropout_probability || 0.0,
+      risk_factors: student.risk_factors || [],
     }))
   } catch (error) {
     console.error('Error fetching students:', error)
@@ -95,38 +125,24 @@ export async function getStudentDetail(studentId: string): Promise<StudentDetail
     
     // Transform backend data to frontend format
     return {
-      id: student.student_id,
+      id: student.id || student.student_id,
       name: student.name,
-      email: `${student.name.toLowerCase().replace(' ', '.')}@university.edu`,
+      email: student.email || `${student.name.toLowerCase().replace(' ', '.')}@university.edu`,
       student_id: student.student_id,
       department: student.department,
       semester: student.semester || 1,
       gpa: student.gpa || 3.0,
       attendance: student.attendance,
-      risk_level: student.risk?.level || 'low',
-      dropout_probability: student.risk?.ml_probability || 0.1,
-      attendance_trend: [
-        { week: 1, percentage: 95 },
-        { week: 2, percentage: 92 },
-        { week: 3, percentage: 88 },
-        { week: 4, percentage: 85 },
-        { week: 5, percentage: 82 },
-        { week: 6, percentage: 78 },
-      ],
-      score_trend: [
-        { exam: 'Midterm 1', score: 78 },
-        { exam: 'Midterm 2', score: 72 },
-        { exam: 'Quiz 1', score: 68 },
-        { exam: 'Quiz 2', score: 65 },
-      ],
-      risk_factors: student.risk?.level === 'high' 
-        ? ['Declining attendance', 'Low exam scores', 'Reduced engagement']
-        : student.risk?.level === 'medium'
-          ? ['Inconsistent performance', 'Occasional absences']
-          : ['No significant risk factors'],
-      recommendations: student.risk?.level === 'high'
-        ? ['Schedule immediate meeting', 'Refer to tutoring services', 'Monitor closely']
-        : ['Regular check-ins recommended', 'Provide academic support'],
+      internal_marks: student.internal_marks,
+      backlogs: student.backlogs,
+      study_hours: student.study_hours,
+      previous_failures: student.previous_failures,
+      risk_level: student.risk_level || 'low',
+      dropout_probability: student.dropout_probability || 0.0,
+      attendance_trend: student.attendance_trend || [],
+      score_trend: student.score_trend || [],
+      risk_factors: student.risk_factors || [],
+      recommendations: student.recommendations || [],
     }
   } catch (error) {
     console.error('Error fetching student detail:', error)
@@ -140,23 +156,17 @@ export async function getStudentDetail(studentId: string): Promise<StudentDetail
           { week: 2, percentage: 92 },
           { week: 3, percentage: 88 },
           { week: 4, percentage: 85 },
-          { week: 5, percentage: 82 },
-          { week: 6, percentage: 78 },
         ],
         score_trend: [
           { exam: 'Midterm 1', score: 78 },
           { exam: 'Midterm 2', score: 72 },
-          { exam: 'Quiz 1', score: 68 },
-          { exam: 'Quiz 2', score: 65 },
         ],
         risk_factors: mockStudent.risk_level === 'high'
-          ? ['Declining attendance', 'Low exam scores', 'Reduced engagement']
-          : mockStudent.risk_level === 'medium'
-            ? ['Inconsistent performance', 'Occasional absences']
-            : ['No significant risk factors'],
+          ? ['Declining attendance', 'Low exam scores']
+          : ['No significant risk factors'],
         recommendations: mockStudent.risk_level === 'high'
-          ? ['Schedule immediate meeting', 'Refer to tutoring services', 'Monitor closely']
-          : ['Regular check-ins recommended', 'Provide academic support'],
+          ? ['Schedule immediate meeting', 'Refer to tutoring services']
+          : ['Regular check-ins recommended'],
       }
     }
     throw error
@@ -169,7 +179,7 @@ export async function uploadData(file: File): Promise<UploadResponse> {
   formData.append('file', file)
 
   try {
-    const response = await fetch(`${API_BASE_URL}/upload-data`, {
+    const response = await fetch(`${API_BASE_URL}/upload`, {
       method: 'POST',
       body: formData,
     })
@@ -181,29 +191,79 @@ export async function uploadData(file: File): Promise<UploadResponse> {
   }
 }
 
-// Analyze risk for a specific student
-export async function analyzeRisk(studentId: string): Promise<AnalysisResponse> {
+// Predict dropout for a single student
+export async function predictDropout(data: PredictionRequest): Promise<PredictionResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/analyze-risk`, {
+    const response = await fetch(`${API_BASE_URL}/predict/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ student_id: studentId }),
+      body: JSON.stringify(data),
     })
-    if (!response.ok) throw new Error(`Failed to analyze risk: ${response.statusText}`)
+    if (!response.ok) throw new Error(`Failed to predict: ${response.statusText}`)
     return await response.json()
   } catch (error) {
-    console.error('Error analyzing risk:', error)
+    console.error('Error predicting dropout:', error)
+    throw error
+  }
+}
+
+// Analyze risk for a specific student
+export async function analyzeStudent(studentId: string): Promise<AnalysisResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/students/${studentId}/analyze`, {
+      method: 'POST',
+    })
+    if (!response.ok) throw new Error(`Failed to analyze student: ${response.statusText}`)
+    return await response.json()
+  } catch (error) {
+    console.error('Error analyzing student:', error)
+    throw error
+  }
+}
+
+// Analyze all students
+export async function analyzeAllStudents(): Promise<any> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/risk/analyze-all`, {
+      method: 'POST',
+    })
+    if (!response.ok) throw new Error(`Failed to analyze all students: ${response.statusText}`)
+    return await response.json()
+  } catch (error) {
+    console.error('Error analyzing all students:', error)
+    throw error
+  }
+}
+
+// Get decision tree visualization
+export async function getTreeVisualization(maxDepth: number = 4): Promise<any> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/risk/visualize/tree?max_depth=${maxDepth}`)
+    if (!response.ok) throw new Error(`Failed to get tree visualization: ${response.statusText}`)
+    return await response.json()
+  } catch (error) {
+    console.error('Error getting tree visualization:', error)
+    throw error
+  }
+}
+
+// Get feature importance
+export async function getFeatureImportance(): Promise<any> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/risk/feature-importance`)
+    if (!response.ok) throw new Error(`Failed to get feature importance: ${response.statusText}`)
+    return await response.json()
+  } catch (error) {
+    console.error('Error getting feature importance:', error)
     throw error
   }
 }
 
 // Send alerts to educators
-export async function sendAlerts(alerts: Array<{ student_id: string; message: string }>) {
+export async function sendAlerts(riskLevel: string = 'high') {
   try {
-    const response = await fetch(`${API_BASE_URL}/send-alerts`, {
+    const response = await fetch(`${API_BASE_URL}/alerts/send?risk_level=${riskLevel}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ alerts }),
     })
     if (!response.ok) throw new Error(`Failed to send alerts: ${response.statusText}`)
     return await response.json()
@@ -216,24 +276,9 @@ export async function sendAlerts(alerts: Array<{ student_id: string; message: st
 // Get dashboard statistics
 export async function getDashboardStats(): Promise<DashboardStats> {
   try {
-    const response = await fetch(`${API_BASE_URL}/students`)
+    const response = await fetch(`${API_BASE_URL}/students/dashboard-stats`)
     if (!response.ok) throw new Error(`Failed to fetch dashboard stats: ${response.statusText}`)
-    const students = await response.json()
-    
-    // Calculate stats from student data
-    const total_students = students.length
-    const high_risk = students.filter((s: any) => s.risk?.level === 'high').length
-    const medium_risk = students.filter((s: any) => s.risk?.level === 'medium').length
-    const low_risk = students.filter((s: any) => s.risk?.level === 'low').length
-    const avg_dropout = students.reduce((sum: number, s: any) => sum + (s.risk?.ml_probability || 0), 0) / students.length
-    
-    return {
-      total_students,
-      high_risk_count: high_risk,
-      medium_risk_count: medium_risk,
-      low_risk_count: low_risk,
-      avg_dropout_probability: avg_dropout,
-    }
+    return await response.json()
   } catch (error) {
     console.error('Error fetching dashboard stats:', error)
     // Return mock data as fallback

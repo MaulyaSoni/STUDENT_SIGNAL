@@ -4,12 +4,19 @@ import React from "react"
 
 import { useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCloudArrowUp, faFileArrowUp, faCircleCheck, faCircleExclamation } from '@fortawesome/free-solid-svg-icons'
+import { 
+  faCloudArrowUp, 
+  faFileArrowUp, 
+  faCircleCheck, 
+  faCircleExclamation,
+  faRobot,
+  faCircleNotch
+} from '@fortawesome/free-solid-svg-icons'
 import { Navigation } from '@/components/Navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { uploadData } from '@/services/api'
+import { uploadData, analyzeAllStudents } from '@/services/api'
 import { motion } from 'framer-motion'
 
 export default function UploadPage() {
@@ -17,7 +24,9 @@ export default function UploadPage() {
   const [dragActive, setDragActive] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
+  const [analyzing, setAnalyzing] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [uploadResult, setUploadResult] = useState<any>(null)
 
   const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
@@ -75,9 +84,10 @@ export default function UploadPage() {
     try {
       setLoading(true)
       const result = await uploadData(file)
+      setUploadResult(result)
       setMessage({
         type: 'success',
-        text: `Successfully processed ${result.rows_processed} student records`,
+        text: `Successfully uploaded! Processed ${result.rows_processed} students${result.rows_analyzed ? `, analyzed ${result.rows_analyzed}` : ''}`,
       })
       setFile(null)
       if (fileInputRef.current) {
@@ -91,6 +101,25 @@ export default function UploadPage() {
       })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleAnalyzeAll = async () => {
+    try {
+      setAnalyzing(true)
+      const result = await analyzeAllStudents()
+      setMessage({
+        type: 'success',
+        text: `Analysis complete! Analyzed ${result.analyzed} of ${result.total_students} students`,
+      })
+    } catch (error) {
+      console.error('[v0] Analysis error:', error)
+      setMessage({
+        type: 'error',
+        text: 'Failed to analyze students. Please ensure backend is running.',
+      })
+    } finally {
+      setAnalyzing(false)
     }
   }
 
@@ -229,10 +258,44 @@ export default function UploadPage() {
                 onClick={handleUpload}
                 disabled={!file || loading}
                 size="lg"
-                className="w-full"
+                className="w-full hover-lift"
               >
-                {loading ? 'Uploading...' : 'Upload File'}
+                {loading ? (
+                  <>
+                    <FontAwesomeIcon icon={faCircleNotch} className="mr-2 animate-spin" />
+                    Uploading...
+                  </>
+                ) : 'Upload File'}
               </Button>
+
+              {/* Analyze All Button */}
+              {uploadResult && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Button
+                    onClick={handleAnalyzeAll}
+                    disabled={analyzing}
+                    size="lg"
+                    variant="outline"
+                    className="w-full hover-lift border-primary"
+                  >
+                    {analyzing ? (
+                      <>
+                        <FontAwesomeIcon icon={faCircleNotch} className="mr-2 animate-spin" />
+                        Analyzing All Students...
+                      </>
+                    ) : (
+                      <>
+                        <FontAwesomeIcon icon={faRobot} className="mr-2" />
+                        Analyze All Students with ML
+                      </>
+                    )}
+                  </Button>
+                </motion.div>
+              )}
             </CardContent>
           </Card>
           </motion.div>

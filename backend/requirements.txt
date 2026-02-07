@@ -1,9 +1,29 @@
+# FastAPI
 fastapi
-uvicorn
+uvicorn[standard]
+
+# Environment
 python-dotenv
+
+# Data Processing
 pandas
 numpy
+
+# Machine Learning
 scikit-learn
+joblib
+
+# Database
 pymongo
+
+# File Upload
 python-multipart
+
+# Email
 sendgrid
+
+# Visualization
+matplotlib
+
+# CORS (included in fastapi but explicit)
+starlette

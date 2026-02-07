@@ -3,7 +3,14 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faChartLine, faUsers, faCloudArrowUp, faRightFromBracket, faGraduationCap } from '@fortawesome/free-solid-svg-icons'
+import { 
+  faChartLine, 
+  faUsers, 
+  faCloudArrowUp, 
+  faRightFromBracket, 
+  faGraduationCap,
+  faRobot
+} from '@fortawesome/free-solid-svg-icons'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
@@ -13,6 +20,7 @@ export function Navigation() {
   const links = [
     { href: '/', label: 'Dashboard', icon: faChartLine },
     { href: '/students', label: 'Students', icon: faUsers },
+    { href: '/predict', label: 'ML Prediction', icon: faRobot },
     { href: '/upload', label: 'Upload Data', icon: faCloudArrowUp },
   ]
 
