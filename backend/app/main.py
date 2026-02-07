@@ -1,13 +1,24 @@
 from fastapi import FastAPI
-from app.routers import upload, students, risk, alerts
+from fastapi.middleware.cors import CORSMiddleware
+from app.routers import students
 
-app = FastAPI(title="EarlySignal.AI Backend")
+app = FastAPI(title="EarlySignal Backend")
 
-app.include_router(upload.router)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(students.router)
-app.include_router(risk.router)
-app.include_router(alerts.router)
 
 @app.get("/")
-def health():
+def root():
     return {"status": "Backend running"}
+
+# app.include_router(students.router)
+# app.include_router(upload.router)
+# app.include_router(risk.router)
+# app.include_router(alerts.router)

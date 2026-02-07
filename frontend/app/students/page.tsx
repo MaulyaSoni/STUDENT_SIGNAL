@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faFilter, faRotateRight, faUsers } from '@fortawesome/free-solid-svg-icons'
 import { Navigation } from '@/components/Navigation'
 import { StudentTable } from '@/components/StudentTable'
 import { Button } from '@/components/ui/button'
@@ -15,6 +17,7 @@ import {
 } from '@/components/ui/select'
 import { getStudents } from '@/services/api'
 import { mockStudents } from '@/lib/mock-data'
+import { motion } from 'framer-motion'
 
 interface Student {
   id: string
@@ -99,19 +102,35 @@ export default function StudentsList() {
       <main className="min-h-screen bg-background">
         <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold tracking-tight">Students</h1>
-            <p className="text-muted-foreground mt-2">
+          <motion.div 
+            className="mb-8"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <h1 className="text-5xl font-bold tracking-tight font-heading text-shiny flex items-center gap-3">
+              <FontAwesomeIcon icon={faUsers} className="text-primary" />
+              Students
+            </h1>
+            <p className="text-glow-yellow mt-2 text-lg font-medium">
               Browse and filter students to identify intervention opportunities
             </p>
-          </div>
+          </motion.div>
 
           {/* Filters */}
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>Filter Students</CardTitle>
-              <CardDescription>Use filters to focus on specific student groups</CardDescription>
-            </CardHeader>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <Card className="mb-8 hover-lift">
+              <CardHeader>
+                <CardTitle className="font-heading flex items-center gap-2">
+                  <FontAwesomeIcon icon={faFilter} className="text-primary" />
+                  Filter Students
+                </CardTitle>
+                <CardDescription>Use filters to focus on specific student groups</CardDescription>
+              </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 <div className="space-y-2">
@@ -163,26 +182,34 @@ export default function StudentsList() {
                 </div>
 
                 <div className="flex items-end">
-                  <Button variant="outline" onClick={handleReset} className="w-full bg-transparent">
+                  <Button variant="outline" onClick={handleReset} className="w-full bg-transparent hover-lift">
+                    <FontAwesomeIcon icon={faRotateRight} className="mr-2" />
                     Reset Filters
                   </Button>
                 </div>
               </div>
             </CardContent>
           </Card>
+          </motion.div>
 
           {/* Student Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                {filteredStudents.length} Student{filteredStudents.length !== 1 ? 's' : ''} Found
-              </CardTitle>
-              <CardDescription>Detailed view of all students matching your criteria</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <StudentTable students={filteredStudents} isLoading={loading} />
-            </CardContent>
-          </Card>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
+            <Card className="hover-lift">
+              <CardHeader>
+                <CardTitle className="font-heading">
+                  {filteredStudents.length} Student{filteredStudents.length !== 1 ? 's' : ''} Found
+                </CardTitle>
+                <CardDescription>Detailed view of all students matching your criteria</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <StudentTable students={filteredStudents} isLoading={loading} />
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
       </main>
     </>

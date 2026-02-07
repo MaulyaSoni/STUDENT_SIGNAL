@@ -3,11 +3,14 @@
 import React from "react"
 
 import { useRef, useState } from 'react'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCloudArrowUp, faFileArrowUp, faCircleCheck, faCircleExclamation } from '@fortawesome/free-solid-svg-icons'
 import { Navigation } from '@/components/Navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { uploadData } from '@/services/api'
+import { motion } from 'framer-motion'
 
 export default function UploadPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -97,31 +100,48 @@ export default function UploadPage() {
       <main className="min-h-screen bg-background">
         <div className="max-w-3xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold tracking-tight">Upload Data</h1>
-            <p className="text-muted-foreground mt-2">
+          <motion.div 
+            className="mb-8"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <h1 className="text-5xl font-bold tracking-tight font-heading text-shiny flex items-center gap-3">
+              <FontAwesomeIcon icon={faCloudArrowUp} className="text-primary" />
+              Upload Data
+            </h1>
+            <p className="text-glow-yellow mt-2 text-lg font-medium">
               Import student data to analyze dropout risk and enable early interventions
             </p>
-          </div>
+          </motion.div>
 
           {/* Upload Card */}
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>Upload Student Data</CardTitle>
-              <CardDescription>
-                Drag and drop your CSV or Excel file or click to browse
-              </CardDescription>
-            </CardHeader>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <Card className="mb-8 hover-lift">
+              <CardHeader>
+                <CardTitle className="font-heading flex items-center gap-2">
+                  <FontAwesomeIcon icon={faFileArrowUp} className="text-primary" />
+                  Upload Student Data
+                </CardTitle>
+                <CardDescription>
+                  Drag and drop your CSV or Excel file or click to browse
+                </CardDescription>
+              </CardHeader>
             <CardContent className="space-y-6">
               {/* Drop Zone */}
-              <div
+              <motion.div
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
-                  dragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-all duration-300 cursor-pointer ${
+                  dragActive ? 'border-primary bg-primary/20 shadow-lg shadow-primary/30' : 'border-border hover:border-primary/50 bg-card/30'
                 }`}
+                whileHover={{ scale: 1.01 }}
               >
                 <input
                   ref={fileInputRef}
@@ -130,33 +150,48 @@ export default function UploadPage() {
                   onChange={handleFileChange}
                   className="hidden"
                 />
-                <div onClick={() => fileInputRef.current?.click()} className="space-y-2">
-                  <div className="text-4xl text-muted-foreground">📁</div>
-                  <h3 className="text-lg font-semibold">
+                <div onClick={() => fileInputRef.current?.click()} className="space-y-3">
+                  <motion.div 
+                    className="text-6xl"
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    <FontAwesomeIcon icon={faFileArrowUp} className="text-primary" />
+                  </motion.div>
+                  <h3 className="text-lg font-semibold text-shiny">
                     {file ? file.name : 'Drag and drop your file here'}
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-glow-yellow">
                     or click to select from your computer
                   </p>
                   <p className="text-xs text-muted-foreground mt-2">
                     Supported formats: CSV, Excel (.xlsx)
                   </p>
                 </div>
-              </div>
+              </motion.div>
 
               {/* File Info */}
               {file && (
-                <div className="bg-secondary rounded-lg p-4">
+                <motion.div 
+                  className="bg-secondary/50 backdrop-blur-sm rounded-lg p-4 border border-primary/30"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
                   <div className="flex justify-between items-center">
-                    <div>
-                      <p className="font-medium">{file.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {(file.size / 1024).toFixed(2)} KB
-                      </p>
+                    <div className="flex items-center gap-3">
+                      <FontAwesomeIcon icon={faCircleCheck} className="text-primary text-xl" />
+                      <div>
+                        <p className="font-medium text-shiny">{file.name}</p>
+                        <p className="text-sm text-glow-yellow">
+                          {(file.size / 1024).toFixed(2)} KB
+                        </p>
+                      </div>
                     </div>
                     <Button
                       variant="outline"
                       size="sm"
+                      className="hover-lift"
                       onClick={() => {
                         setFile(null)
                         if (fileInputRef.current) {
@@ -167,16 +202,26 @@ export default function UploadPage() {
                       Remove
                     </Button>
                   </div>
-                </div>
+                </motion.div>
               )}
 
               {/* Messages */}
               {message && (
-                <Alert className={message.type === 'success' ? 'border-risk-low/30 bg-risk-low/5' : 'border-risk-high/30 bg-risk-high/5'}>
-                  <AlertDescription className={message.type === 'success' ? 'text-risk-low' : 'text-risk-high'}>
-                    {message.text}
-                  </AlertDescription>
-                </Alert>
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Alert className={`border-2 ${message.type === 'success' ? 'border-risk-low/50 bg-risk-low/20' : 'border-risk-high/50 bg-risk-high/20'}`}>
+                    <FontAwesomeIcon 
+                      icon={message.type === 'success' ? faCircleCheck : faCircleExclamation} 
+                      className={message.type === 'success' ? 'text-risk-low' : 'text-risk-high'} 
+                    />
+                    <AlertDescription className={`${message.type === 'success' ? 'text-risk-low' : 'text-risk-high'} font-medium`}>
+                      {message.text}
+                    </AlertDescription>
+                  </Alert>
+                </motion.div>
               )}
 
               {/* Upload Button */}
@@ -190,40 +235,47 @@ export default function UploadPage() {
               </Button>
             </CardContent>
           </Card>
+          </motion.div>
 
           {/* File Format Guide */}
-          <Card>
-            <CardHeader>
-              <CardTitle>File Format Requirements</CardTitle>
-              <CardDescription>
-                Ensure your file includes the following columns
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-semibold mb-2">Required Columns:</h4>
-                  <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-                    <li>Student ID</li>
-                    <li>Name</li>
-                    <li>Email</li>
-                    <li>Department</li>
-                    <li>Semester</li>
-                    <li>GPA</li>
-                    <li>Attendance (%)</li>
-                  </ul>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
+            <Card className="hover-lift">
+              <CardHeader>
+                <CardTitle className="font-heading">File Format Requirements</CardTitle>
+                <CardDescription>
+                  Ensure your file includes the following columns
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold mb-2 text-glow-green">Required Columns:</h4>
+                    <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                      <li>Student ID</li>
+                      <li>Name</li>
+                      <li>Email</li>
+                      <li>Department</li>
+                      <li>Semester</li>
+                      <li>GPA</li>
+                      <li>Attendance (%)</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-2 text-glow-green">Optional Columns:</h4>
+                    <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                      <li>Recent Exam Scores</li>
+                      <li>Assignment Completion Rate</li>
+                      <li>Course Engagement Metrics</li>
+                    </ul>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-semibold mb-2">Optional Columns:</h4>
-                  <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-                    <li>Recent Exam Scores</li>
-                    <li>Assignment Completion Rate</li>
-                    <li>Course Engagement Metrics</li>
-                  </ul>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
       </main>
     </>
