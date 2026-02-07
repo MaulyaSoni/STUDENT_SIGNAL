@@ -20,3 +20,5 @@ students_collection = db["students"]
 alerts_collection = db["alerts"]
 
 print("✅ MongoDB connected")
+print("DB NAME:", db.name)
+print("COLLECTIONS:", db.list_collection_names())
